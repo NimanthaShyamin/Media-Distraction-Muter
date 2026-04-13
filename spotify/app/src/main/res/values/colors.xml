@@ -2,4 +2,14 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Design system tokens -->
+    <color name="bg_primary">#121212</color>
+    <color name="bg_card">#1E1E1E</color>
+    <color name="bg_item">#2A2A2A</color>
+    <color name="accent_green">#39FF14</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#AAAAAA</color>
+    <color name="text_muted">#555555</color>
+    <color name="divider">#2A2A2A</color>
 </resources>

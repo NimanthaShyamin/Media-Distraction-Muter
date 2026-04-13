@@ -1,3 +1,40 @@
 <resources>
-    <string name="app_name">AdMute for Spotify</string>
+    <string name="app_name">AdMute</string>
+
+    <!-- Setup screen -->
+    <string name="setup_title">Set Up AdMute</string>
+    <string name="setup_subtitle">Grant the required permissions to start silencing Spotify ads automatically.</string>
+    <string name="setup_perm_notification">Notification Access</string>
+    <string name="setup_perm_notification_desc">Detect when an ad is playing</string>
+    <string name="setup_perm_dnd">Do Not Disturb Access</string>
+    <string name="setup_perm_dnd_desc">Control device volume silently</string>
+    <string name="setup_perm_battery">Unrestricted Battery</string>
+    <string name="setup_perm_battery_desc">Prevent Android from killing the background service</string>
+    <string name="setup_status_granted">Granted</string>
+    <string name="setup_status_required">Required</string>
+    <string name="setup_status_optional">Optional</string>
+    <string name="setup_continue">Finish Setup</string>
+
+    <!-- Main dashboard -->
+    <string name="dashboard_ads_silenced">Ads Silenced</string>
+    <string name="dashboard_history_title">History</string>
+    <string name="dashboard_empty_history">No ads muted yet.\nPlay Spotify in the background!</string>
+    <string name="dashboard_header_today">TODAY</string>
+    <string name="dashboard_header_yesterday">YESTERDAY</string>
+    <string name="dashboard_header_week">LAST 7 DAYS</string>
+    <string name="dashboard_header_older">OLDER</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_boot_label">Start on Device Boot</string>
+    <string name="settings_boot_desc">Automatically run AdMute after a reboot</string>
+
+    <!-- Service notification -->
+    <string name="notif_channel_name">AdMute Service</string>
+    <string name="notif_title">AdMute Active</string>
+    <string name="notif_text">Silencing Spotify ads</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_settings_icon">Open settings</string>
+    <string name="cd_muted_icon">Ad was muted</string>
 </resources>

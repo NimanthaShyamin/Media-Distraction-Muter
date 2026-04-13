@@ -5,111 +5,109 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="top"
-    android:padding="16dp"
-    android:background="#121212"
+    android:background="@color/bg_primary"
     tools:context=".MainActivity">
 
-    <com.google.android.material.card.MaterialCardView
+    <!-- ── Header ── -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="@string/app_name"
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.03" />
+
+        <ImageButton
+            android:id="@+id/btnSettings"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_settings"
+            android:contentDescription="@string/cd_settings_icon"
+            android:padding="10dp" />
+
+    </RelativeLayout>
+
+    <!-- ── Hero Counter Card ── -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="#2A2A2A"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="4dp">
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/bg_card_rounded"
+        android:paddingTop="40dp"
+        android:paddingBottom="40dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tvAdCount"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:text="0"
+            android:textColor="@color/accent_green"
+            android:textSize="88sp"
+            android:textStyle="bold"
+            android:lineHeight="88sp"
+            android:includeFontPadding="false"
+            tools:text="142" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Your Listening Stats"
-                android:textColor="#FFFFFF"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/mutedAdsCountTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textColor="#4CAF50"
-                android:textSize="48sp"
-                android:textStyle="bold"
-                android:layout_marginTop="16dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="disturbances removed from your ears"
-                android:textColor="#CCCCCC"
-                android:textSize="16sp"/>
-
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="#2A2A2A"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="4dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:text="@string/dashboard_ads_silenced"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="4dp" />
 
-            <TextView
-                android:id="@+id/statusTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Service is ready."
-                android:textColor="#FFFFFF"
-                android:textSize="18sp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp"/>
+    </LinearLayout>
 
-            <Button
-                android:id="@+id/toggleServiceButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Start AdMute Service"
-                app:cornerRadius="8dp"/>
-
-            <Button
-                android:id="@+id/permissionButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Grant Permissions"
-                android:backgroundTint="#555555"
-                app:cornerRadius="8dp"/>
-
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
+    <!-- ── History Label ── -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Mute History"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp"
+        android:text="@string/dashboard_history_title"
+        android:textColor="@color/text_primary"
+        android:textSize="18sp"
         android:textStyle="bold"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="8dp"/>
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="4dp" />
 
-    <ListView
-        android:id="@+id/timelineListView"
+    <!-- ── Empty state ── -->
+    <TextView
+        android:id="@+id/tvEmptyState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/dashboard_empty_history"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp"
+        android:textAlignment="center"
+        android:lineSpacingMultiplier="1.5"
+        android:paddingTop="40dp"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <!-- ── History RecyclerView ── -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerHistory"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="8dp"/>
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"
+        tools:listitem="@layout/item_mute_event" />
 
 </LinearLayout>
