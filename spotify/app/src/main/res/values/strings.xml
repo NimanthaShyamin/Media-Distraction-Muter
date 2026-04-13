@@ -1,21 +1,36 @@
 <resources>
     <string name="app_name">AdMute</string>
 
-    <!-- Setup screen -->
-    <string name="setup_title">Set Up AdMute</string>
-    <string name="setup_subtitle">Grant the required permissions to start silencing Spotify ads automatically.</string>
+    <!-- ── Setup Wizard ── Step 1: Restricted Settings guide ─────────────── -->
+    <string name="wizard_step1_label">STEP 1 OF 2</string>
+    <string name="wizard_step1_title">Unlock Android\nRestrictions</string>
+    <string name="wizard_step1_body">Because AdMute was installed outside the Play Store, Android hides its advanced permissions by default.\n\nTo fix this:\n\n1. Tap "Open App Settings" below.\n2. In the App Info screen, tap the ⋮ three-dot menu in the top-right corner.\n3. Tap "Allow restricted settings".\n\nOnce done, tap "I\'ve Done This" to continue.</string>
+    <string name="wizard_step1_hint">↑  Tap the ⋮ menu in the top-right, then tap "Allow restricted settings"</string>
+    <string name="wizard_step1_btn_settings">Open App Settings</string>
+    <string name="wizard_step1_btn_next">I\'ve Done This  →</string>
+
+    <!-- ── Setup Wizard ── Step 2: Grant Permissions ──────────────────────── -->
+    <string name="wizard_step2_label">STEP 2 OF 2</string>
+    <string name="wizard_step2_title">Grant Permissions</string>
+    <string name="wizard_step2_subtitle">Now grant the required permissions to allow AdMute to run silently in the background.</string>
+
+    <!-- Permission row labels -->
     <string name="setup_perm_notification">Notification Access</string>
     <string name="setup_perm_notification_desc">Detect when an ad is playing</string>
-    <string name="setup_perm_dnd">Do Not Disturb Access</string>
-    <string name="setup_perm_dnd_desc">Control device volume silently</string>
     <string name="setup_perm_battery">Unrestricted Battery</string>
     <string name="setup_perm_battery_desc">Prevent Android from killing the background service</string>
-    <string name="setup_status_granted">Granted</string>
+    <string name="setup_perm_dnd">Do Not Disturb Access</string>
+    <string name="setup_perm_dnd_desc">Control device volume silently</string>
+
+    <!-- Status chips -->
+    <string name="setup_status_granted">Granted ✓</string>
     <string name="setup_status_required">Required</string>
     <string name="setup_status_optional">Optional</string>
+
+    <!-- Finish button -->
     <string name="setup_continue">Finish Setup</string>
 
-    <!-- Main dashboard -->
+    <!-- ── Main dashboard ─────────────────────────────────────────────────── -->
     <string name="dashboard_ads_silenced">Ads Silenced</string>
     <string name="dashboard_history_title">History</string>
     <string name="dashboard_empty_history">No ads muted yet.\nPlay Spotify in the background!</string>
@@ -24,17 +39,17 @@
     <string name="dashboard_header_week">LAST 7 DAYS</string>
     <string name="dashboard_header_older">OLDER</string>
 
-    <!-- Settings screen -->
+    <!-- ── Settings screen ────────────────────────────────────────────────── -->
     <string name="settings_title">Settings</string>
     <string name="settings_boot_label">Start on Device Boot</string>
     <string name="settings_boot_desc">Automatically run AdMute after a reboot</string>
 
-    <!-- Service notification -->
+    <!-- ── Service notification ───────────────────────────────────────────── -->
     <string name="notif_channel_name">AdMute Service</string>
     <string name="notif_title">AdMute Active</string>
     <string name="notif_text">Silencing Spotify ads</string>
 
-    <!-- Content descriptions -->
+    <!-- ── Content descriptions ───────────────────────────────────────────── -->
     <string name="cd_settings_icon">Open settings</string>
     <string name="cd_muted_icon">Ad was muted</string>
 </resources>

@@ -1,255 +1,452 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Two-step setup wizard.
+    Step 0 (index 0): Restricted Settings guide  — educate the user before permissions
+    Step 1 (index 1): Grant permissions          — three standard permission buttons
+    ViewFlipper handles the slide between the two steps.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/bg_primary"
-    android:padding="24dp">
+    android:background="@color/bg_primary">
 
-    <!-- Logo / Icon area -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center">
-
-        <ImageView
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:src="@drawable/ic_volume_off"
-            android:importantForAccessibility="no"
-            app:tint="@color/accent_green" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/setup_title"
-            android:textColor="@color/text_primary"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:layout_marginTop="16dp"
-            android:letterSpacing="0.02" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/setup_subtitle"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp"
-            android:textAlignment="center"
-            android:layout_marginTop="8dp"
-            android:lineSpacingMultiplier="1.4" />
-
-    </LinearLayout>
-
-    <!-- Permission rows -->
+    <!-- ── Progress bar row ─────────────────────────────────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginBottom="24dp">
+        android:orientation="horizontal"
+        android:padding="24dp"
+        android:paddingBottom="0dp"
+        android:gravity="center_vertical">
 
-        <!-- Notification Access row -->
-        <LinearLayout
-            android:id="@+id/rowNotification"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="@drawable/bg_card_rounded"
-            android:padding="16dp"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="12dp"
-            android:clickable="true"
-            android:focusable="true">
+        <View
+            android:id="@+id/progressStep1"
+            android:layout_width="0dp"
+            android:layout_height="4dp"
+            android:layout_weight="1"
+            android:background="#39FF14"
+            android:layout_marginEnd="6dp" />
 
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@drawable/bg_icon_circle"
-                android:src="@drawable/ic_volume_off"
-                android:padding="9dp"
-                android:importantForAccessibility="no"
-                app:tint="@color/accent_green" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="14dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_perm_notification"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_perm_notification_desc"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
-                    android:layout_marginTop="2dp" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/chipNotification"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_status_required"
-                android:textColor="@color/bg_primary"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:background="#FF5252"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp" />
-
-        </LinearLayout>
-
-        <!-- Battery Optimization row -->
-        <LinearLayout
-            android:id="@+id/rowBattery"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="@drawable/bg_card_rounded"
-            android:padding="16dp"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="12dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@drawable/bg_icon_circle"
-                android:src="@drawable/ic_check_circle"
-                android:padding="9dp"
-                android:importantForAccessibility="no"
-                app:tint="@color/accent_green" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="14dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_perm_battery"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_perm_battery_desc"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
-                    android:layout_marginTop="2dp" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/chipBattery"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_status_required"
-                android:textColor="@color/bg_primary"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:background="#FF5252"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp" />
-
-        </LinearLayout>
-
-        <!-- DND Access row -->
-        <LinearLayout
-            android:id="@+id/rowDnd"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="@drawable/bg_card_rounded"
-            android:padding="16dp"
-            android:gravity="center_vertical"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@drawable/bg_icon_circle"
-                android:src="@drawable/ic_settings"
-                android:padding="9dp"
-                android:importantForAccessibility="no"
-                app:tint="@color/accent_green" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="14dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_perm_dnd"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_perm_dnd_desc"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
-                    android:layout_marginTop="2dp" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/chipDnd"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_status_required"
-                android:textColor="@color/bg_primary"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:background="#FF5252"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp" />
-
-        </LinearLayout>
+        <View
+            android:id="@+id/progressStep2"
+            android:layout_width="0dp"
+            android:layout_height="4dp"
+            android:layout_weight="1"
+            android:background="#2A2A2A"
+            android:layout_marginStart="6dp" />
 
     </LinearLayout>
 
-    <!-- Finish Setup button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnContinue"
+    <!-- ── ViewFlipper — the two wizard steps ────────────────────────────────── -->
+    <ViewFlipper
+        android:id="@+id/wizardFlipper"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="@string/setup_continue"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        android:textColor="@color/bg_primary"
-        app:backgroundTint="@color/accent_green"
-        app:cornerRadius="14dp"
-        android:enabled="false"
-        android:alpha="0.4" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:inAnimation="@android:anim/slide_in_left"
+        android:outAnimation="@android:anim/slide_out_right">
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- STEP 1 — Unlock Android Restricted Settings                       -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="28dp"
+                android:gravity="center_horizontal">
+
+                <!-- Step label -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/wizard_step1_label"
+                    android:textColor="@color/accent_green"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Header -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/wizard_step1_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textAlignment="center"
+                    android:lineSpacingMultiplier="1.2"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Explanation card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_card_rounded"
+                    android:padding="20dp"
+                    android:layout_marginBottom="20dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/wizard_step1_body"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        android:lineSpacingMultiplier="1.5" />
+
+                </LinearLayout>
+
+                <!-- Illustration: App Info screen 3-dot menu hint -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_card_rounded"
+                    android:padding="20dp"
+                    android:gravity="center"
+                    android:layout_marginBottom="24dp">
+
+                    <!-- Simulated Android App Info top-bar preview -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="#1A1A1A"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="App info"
+                            android:textColor="#FFFFFF"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <!-- The 3-dot ⋮ icon with highlight ring -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:background="#33FF5252"
+                            android:padding="6dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:src="@android:drawable/ic_menu_more"
+                                android:importantForAccessibility="no"
+                                app:tint="#FFFFFF" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/wizard_step1_hint"
+                        android:textColor="@color/accent_green"
+                        android:textSize="12sp"
+                        android:textAlignment="center"
+                        android:layout_marginTop="12dp"
+                        android:drawablePadding="6dp" />
+
+                </LinearLayout>
+
+                <!-- CTA: Open App Settings -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOpenAppSettings"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="@string/wizard_step1_btn_settings"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/bg_primary"
+                    app:backgroundTint="@color/accent_green"
+                    app:cornerRadius="12dp"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- CTA: Advance to Step 2 -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDoneStep1"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="@string/wizard_step1_btn_next"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    app:backgroundTint="#2A2A2A"
+                    app:strokeColor="@color/accent_green"
+                    app:strokeWidth="1dp"
+                    app:cornerRadius="12dp" />
+
+            </LinearLayout>
+        </ScrollView>
+
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- STEP 2 — Grant Standard Permissions                               -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="28dp"
+                android:gravity="center_horizontal">
+
+                <!-- Step label -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/wizard_step2_label"
+                    android:textColor="@color/accent_green"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Header -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/wizard_step2_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textAlignment="center"
+                    android:lineSpacingMultiplier="1.2"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/wizard_step2_subtitle"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
+                    android:textAlignment="center"
+                    android:lineSpacingMultiplier="1.4"
+                    android:layout_marginBottom="24dp" />
+
+                <!-- ── Permission 1: Notification Access ─────────────────────── -->
+                <LinearLayout
+                    android:id="@+id/rowNotification"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@drawable/bg_card_rounded"
+                    android:padding="16dp"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_icon_circle"
+                        android:src="@drawable/ic_volume_off"
+                        android:padding="9dp"
+                        android:importantForAccessibility="no"
+                        app:tint="@color/accent_green" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setup_perm_notification"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setup_perm_notification_desc"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/chipNotification"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_status_required"
+                        android:textColor="@color/bg_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:background="#FF5252"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp" />
+
+                </LinearLayout>
+
+                <!-- ── Permission 2: Battery Optimization ────────────────────── -->
+                <LinearLayout
+                    android:id="@+id/rowBattery"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@drawable/bg_card_rounded"
+                    android:padding="16dp"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_icon_circle"
+                        android:src="@drawable/ic_check_circle"
+                        android:padding="9dp"
+                        android:importantForAccessibility="no"
+                        app:tint="@color/accent_green" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setup_perm_battery"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setup_perm_battery_desc"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/chipBattery"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_status_required"
+                        android:textColor="@color/bg_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:background="#FF5252"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp" />
+
+                </LinearLayout>
+
+                <!-- ── Permission 3: Do Not Disturb ──────────────────────────── -->
+                <LinearLayout
+                    android:id="@+id/rowDnd"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@drawable/bg_card_rounded"
+                    android:padding="16dp"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="28dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_icon_circle"
+                        android:src="@drawable/ic_settings"
+                        android:padding="9dp"
+                        android:importantForAccessibility="no"
+                        app:tint="@color/accent_green" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setup_perm_dnd"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setup_perm_dnd_desc"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/chipDnd"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_status_required"
+                        android:textColor="@color/bg_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:background="#FF5252"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp" />
+
+                </LinearLayout>
+
+                <!-- ── Finish Setup ────────────────────────────────────────────── -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnContinue"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="@string/setup_continue"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/bg_primary"
+                    app:backgroundTint="@color/accent_green"
+                    app:cornerRadius="14dp"
+                    android:enabled="false"
+                    android:alpha="0.4" />
+
+            </LinearLayout>
+        </ScrollView>
+
+    </ViewFlipper>
 
 </LinearLayout>

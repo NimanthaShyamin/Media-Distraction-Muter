@@ -9,6 +9,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
@@ -32,7 +33,7 @@ class MainActivity : AppCompatActivity() {
 
         // ── Permission gate ───────────────────────────────────────────────────
         // If either required permission is missing, redirect to SetupActivity.
-        if (!isNotificationListenerEnabled() || !isDndGranted()) {
+        if (!isNotificationListenerEnabled() || !isDndGranted() || !isBatteryOptimizationIgnored()) {
             startActivity(Intent(this, SetupActivity::class.java))
             finish()
             return
@@ -57,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
 
         // Re-check permissions on every resume (e.g. user revoked them in bg)
-        if (!isNotificationListenerEnabled() || !isDndGranted()) {
+        if (!isNotificationListenerEnabled() || !isDndGranted() || !isBatteryOptimizationIgnored()) {
             startActivity(Intent(this, SetupActivity::class.java))
             finish()
             return
@@ -106,6 +107,11 @@ class MainActivity : AppCompatActivity() {
     private fun isDndGranted(): Boolean {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         return nm.isNotificationPolicyAccessGranted
+    }
+
+    private fun isBatteryOptimizationIgnored(): Boolean {
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        return pm.isIgnoringBatteryOptimizations(packageName)
     }
 
     // ── Crash report ──────────────────────────────────────────────────────────
