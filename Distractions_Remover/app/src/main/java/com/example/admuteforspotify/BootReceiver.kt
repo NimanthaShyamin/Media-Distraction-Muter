@@ -28,10 +28,11 @@ class BootReceiver : BroadcastReceiver() {
         when (action) {
             Intent.ACTION_BOOT_COMPLETED -> {
                 // Credential-protected storage is now accessible — check preference.
-                if (PrefsHelper(context).isBootReceiverEnabled()) {
+                val prefs = PrefsHelper(context)
+                if (prefs.isBootReceiverEnabled() && prefs.isMasterAppEnabled()) {
                     startService(context)
                 } else {
-                    Log.d(TAG, "Boot receiver disabled by user preference — skipping start")
+                    Log.d(TAG, "Boot receiver or Master App disabled by user preference — skipping start")
                 }
             }
             "android.intent.action.LOCKED_BOOT_COMPLETED" -> {

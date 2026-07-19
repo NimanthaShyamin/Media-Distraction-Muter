@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  accessibility_service_config.xml
+  ─────────────────────────────────────────────────────────────────────────────
+  Battery-optimized configuration for AdMuteAccessibilityService.
+
+  Key optimizations:
+  ┌──────────────────────────────┬─────────────────────────────────────────────┐
+  │ Attribute                    │ Rationale                                   │
+  ├──────────────────────────────┼─────────────────────────────────────────────┤
+  │ packageNames                 │ Restricts the service to ONLY the four      │
+  │                              │ target apps. Without this, Android would    │
+  │                              │ dispatch events from *every* app on the     │
+  │                              │ device, wasting CPU and battery.            │
+  ├──────────────────────────────┼─────────────────────────────────────────────┤
+  │ accessibilityEventTypes      │ We only need window-level changes to detect │
+  │                              │ ad overlays/screens. Ignoring granular      │
+  │                              │ events (focus, scroll, text changes) avoids │
+  │                              │ thousands of unnecessary callbacks.         │
+  ├──────────────────────────────┼─────────────────────────────────────────────┤
+  │ notificationTimeout          │ 500ms debounce coalesces rapid-fire events  │
+  │                              │ (e.g., RecyclerView rebinds) into a single │
+  │                              │ callback, drastically reducing wakeups.     │
+  ├──────────────────────────────┼─────────────────────────────────────────────┤
+  │ accessibilityFeedbackType    │ feedbackGeneric is the lightest option;     │
+  │                              │ we never produce spoken/haptic feedback.    │
+  ├──────────────────────────────┼─────────────────────────────────────────────┤
+  │ canRetrieveWindowContent     │ Must be true so we can inspect the view     │
+  │                              │ hierarchy to identify ad UI elements.       │
+  └──────────────────────────────┴─────────────────────────────────────────────┘
+-->
+<accessibility-service
+    xmlns:android="http://schemas.android.com/apk/res/android"
+
+    android:description="@string/accessibility_service_description"
+
+    android:packageNames="com.google.android.youtube,com.facebook.katana,com.instagram.android,com.spotify.music"
+
+    android:accessibilityEventTypes="typeWindowContentChanged|typeWindowStateChanged"
+
+    android:accessibilityFeedbackType="feedbackGeneric"
+
+    android:notificationTimeout="500"
+
+    android:canRetrieveWindowContent="true"
+
+    android:settingsActivity="com.example.admuteforspotify.SettingsActivity" />

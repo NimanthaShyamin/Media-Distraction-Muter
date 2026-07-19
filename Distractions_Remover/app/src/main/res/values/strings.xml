@@ -52,4 +52,7 @@
     <!-- ── Content descriptions ───────────────────────────────────────────── -->
     <string name="cd_settings_icon">Open settings</string>
     <string name="cd_muted_icon">Ad was muted</string>
+
+    <!-- ── Accessibility service ─────────────────────────────────────────── -->
+    <string name="accessibility_service_description">AdMute monitors YouTube, Facebook, Instagram, and Spotify for ads and automatically mutes your device while they play. This service only watches for screen changes in these four apps and does not collect or share any personal data.</string>
 </resources>

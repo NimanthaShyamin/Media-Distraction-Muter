@@ -58,10 +58,24 @@ class PrefsHelper(context: Context) {
         prefs.edit().putBoolean(KEY_BOOT, enabled).apply()
     }
 
+    fun isMasterAppEnabled(): Boolean = prefs.getBoolean(KEY_MASTER_ENABLE, true)
+
+    fun setMasterAppEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_MASTER_ENABLE, enabled).apply()
+    }
+
+    fun isAppEnabled(appKey: String): Boolean = prefs.getBoolean("${KEY_APP_ENABLE_PREFIX}$appKey", true)
+
+    fun setAppEnabled(appKey: String, enabled: Boolean) {
+        prefs.edit().putBoolean("${KEY_APP_ENABLE_PREFIX}$appKey", enabled).apply()
+    }
+
     companion object {
         private const val PREFS_NAME = "AdMutePrefs"
         private const val KEY_HISTORY = "mute_history_v2"
         private const val KEY_COUNT = "mute_count_v2"
         private const val KEY_BOOT = "boot_enabled"
+        private const val KEY_MASTER_ENABLE = "master_app_enable"
+        private const val KEY_APP_ENABLE_PREFIX = "app_enable_"
     }
 }

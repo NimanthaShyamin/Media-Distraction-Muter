@@ -53,6 +53,9 @@ class AdMuteService : NotificationListenerService() {
 
         /** Lightweight static flag so MainActivity can read connection state. */
         @Volatile var isListenerConnected = false
+        
+        /** Static reference for IPC from AdMuteAccessibilityService */
+        var instance: AdMuteService? = null
     }
 
     // ── MediaController callback ───────────────────────────────────────────────
@@ -232,6 +235,11 @@ class AdMuteService : NotificationListenerService() {
             val durationMs = System.currentTimeMillis() - muteStartMs
             Log.d(TAG, "Unmuted — duration=${durationMs}ms  failsafe=$fromFailsafe")
             PrefsHelper(applicationContext).saveMuteEvent(muteStartMs, durationMs)
+            
+            if (durationMs > 0) {
+                StatsManager.addTimeSaved(applicationContext, StatsManager.APP_SPOTIFY, durationMs)
+                StatsManager.incrementMuted(applicationContext, StatsManager.APP_SPOTIFY)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to unmute", e)
         }
@@ -281,6 +289,7 @@ class AdMuteService : NotificationListenerService() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             setupAudioPlaybackCallback()
@@ -298,6 +307,7 @@ class AdMuteService : NotificationListenerService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        instance = null
         handler.removeCallbacks(failsafeRunnable)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioPlaybackCallback != null) {
             audioManager.unregisterAudioPlaybackCallback(audioPlaybackCallback!!)
@@ -325,7 +335,7 @@ class AdMuteService : NotificationListenerService() {
         }
     }
 
-    private fun buildNotification(): android.app.Notification {
+    private fun buildNotification(contentText: String? = null): android.app.Notification {
         val contentIntent = PendingIntent.getActivity(
             this, 0,
             Intent(this, MainActivity::class.java),
@@ -333,11 +343,17 @@ class AdMuteService : NotificationListenerService() {
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.notif_title))
-            .setContentText(getString(R.string.notif_text))
+            .setContentText(contentText ?: getString(R.string.notif_text))
             .setSmallIcon(android.R.drawable.ic_lock_silent_mode)
             .setContentIntent(contentIntent)
             .setOngoing(true)
             .setSilent(true)
             .build()
+    }
+    
+    fun updateNotification(contentText: String) {
+        val notification = buildNotification(contentText)
+        val nm = getSystemService(NotificationManager::class.java)
+        nm.notify(NOTIF_ID, notification)
     }
 }
