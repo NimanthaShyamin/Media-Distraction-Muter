@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.AudioPlaybackConfiguration
@@ -47,6 +48,10 @@ class AdMuteService : NotificationListenerService() {
 
     companion object {
         const val CHANNEL_ID = "AdMuteServiceChannel"
+        /**
+         * Notification ID for the Spotify Engine.
+         * AdMuteAccessibilityService (screen apps) uses ID 2. These two IDs must never overlap.
+         */
         private const val NOTIF_ID = 1
         private const val FAILSAFE_MS = 4 * 60 * 1000L  // 4 minutes
         private const val TAG = "AdMuteService"
@@ -54,8 +59,6 @@ class AdMuteService : NotificationListenerService() {
         /** Lightweight static flag so MainActivity can read connection state. */
         @Volatile var isListenerConnected = false
         
-        /** Static reference for IPC from AdMuteAccessibilityService */
-        var instance: AdMuteService? = null
     }
 
     // ── MediaController callback ───────────────────────────────────────────────
@@ -80,73 +83,87 @@ class AdMuteService : NotificationListenerService() {
         metadata: MediaMetadata?,
         playbackState: android.media.session.PlaybackState?
     ) {
-        val stateVal = playbackState?.state
-        Log.d(TAG, "evaluateState: stateVal=$stateVal, isNavigationActive=$isNavigationActive")
+        try {
+            // ── Requirement 1: Spotify Tie-in / Traffic Cop ──
+            val prefs = PrefsHelper(applicationContext)
+            if (!prefs.isMasterAppEnabled() || !prefs.isAppEnabled(StatsManager.APP_SPOTIFY)) {
+                Log.d(TAG, "evaluateState: Master or Spotify toggle is OFF — unmuting")
+                unmuteVolume()
+                updateNotification("Spotify Monitoring Disabled")
+                return
+            }
 
-        // ── Requirement 1: Handle Paused/Stopped Playback State ──
-        if (stateVal == android.media.session.PlaybackState.STATE_PAUSED ||
-            stateVal == android.media.session.PlaybackState.STATE_STOPPED ||
-            stateVal == android.media.session.PlaybackState.STATE_NONE) {
-            Log.d(TAG, "Playback state is PAUSED, STOPPED or NONE — immediately unmuting")
-            unmuteVolume()
-            return
-        }
+            val stateVal = playbackState?.state
+            Log.d(TAG, "evaluateState: stateVal=$stateVal, isNavigationActive=$isNavigationActive")
 
-        // ── Requirement 2: Skip muting if navigation is active ──
-        if (isNavigationActive) {
-            Log.d(TAG, "evaluateState: Navigation is active — postponing mute if needed")
-            if (metadata != null) {
-                val artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: ""
-                val album  = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM)  ?: ""
-                val title  = metadata.getString(MediaMetadata.METADATA_KEY_TITLE)  ?: ""
-                val isAd = isAdByMetadata(title, album) || !isSkipEnabled(playbackState)
-                
-                if (isAd) {
-                    isTemporaryUnmutedForNav = true
-                } else {
-                    isTemporaryUnmutedForNav = false
+            // ── Requirement 1: Handle Paused/Stopped Playback State ──
+            if (stateVal == android.media.session.PlaybackState.STATE_PAUSED ||
+                stateVal == android.media.session.PlaybackState.STATE_STOPPED ||
+                stateVal == android.media.session.PlaybackState.STATE_NONE) {
+                Log.d(TAG, "Playback state is PAUSED, STOPPED or NONE — immediately unmuting")
+                unmuteVolume()
+                return
+            }
+
+            // ── Requirement 2: Skip muting if navigation is active ──
+            if (isNavigationActive) {
+                Log.d(TAG, "evaluateState: Navigation is active — postponing mute if needed")
+                if (metadata != null) {
+                    val artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: ""
+                    val album  = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM)  ?: ""
+                    val title  = metadata.getString(MediaMetadata.METADATA_KEY_TITLE)  ?: ""
+                    val isAd = isAdByMetadata(title, album) || !isSkipEnabled(playbackState)
+                    
+                    if (isAd) {
+                        isTemporaryUnmutedForNav = true
+                    } else {
+                        isTemporaryUnmutedForNav = false
+                    }
+                }
+                unmuteVolume()
+                return
+            }
+
+            if (metadata == null) {
+                // No metadata at all — conservative: don't mute yet, wait for signal
+                Log.d(TAG, "evaluateState: null metadata — holding current state")
+                return
+            }
+
+            val artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: ""
+            val album  = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM)  ?: ""
+            val title  = metadata.getString(MediaMetadata.METADATA_KEY_TITLE)  ?: ""
+
+            Log.d(TAG, "evaluateState: title='$title'  artist='$artist'  album='$album'  " +
+                    "skipEnabled=${isSkipEnabled(playbackState)}")
+
+            when {
+                // ── Unmute condition: rich metadata with both artist AND album ──────
+                artist.isNotBlank() && album.isNotBlank() -> {
+                    Log.d(TAG, "Rich metadata detected — this is a real track")
+                    unmuteVolume()
+                }
+
+                // ── Primary ad check: album empty AND title == "Spotify" ────────────
+                isAdByMetadata(title, album) -> {
+                    Log.d(TAG, "Ad detected via metadata heuristic")
+                    muteVolume()
+                }
+
+                // ── Secondary ad check: skip-to-next action is disabled ─────────────
+                // Spotify disables the skip button during ads.
+                !isSkipEnabled(playbackState) -> {
+                    Log.d(TAG, "Ad detected via disabled skip action")
+                    muteVolume()
+                }
+
+                else -> {
+                    Log.d(TAG, "Indeterminate state — maintaining current mute state")
                 }
             }
-            unmuteVolume()
-            return
-        }
-
-        if (metadata == null) {
-            // No metadata at all — conservative: don't mute yet, wait for signal
-            Log.d(TAG, "evaluateState: null metadata — holding current state")
-            return
-        }
-
-        val artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: ""
-        val album  = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM)  ?: ""
-        val title  = metadata.getString(MediaMetadata.METADATA_KEY_TITLE)  ?: ""
-
-        Log.d(TAG, "evaluateState: title='$title'  artist='$artist'  album='$album'  " +
-                "skipEnabled=${isSkipEnabled(playbackState)}")
-
-        when {
-            // ── Unmute condition: rich metadata with both artist AND album ──────
-            artist.isNotBlank() && album.isNotBlank() -> {
-                Log.d(TAG, "Rich metadata detected — this is a real track")
-                unmuteVolume()
-            }
-
-            // ── Primary ad check: album empty AND title == "Spotify" ────────────
-            isAdByMetadata(title, album) -> {
-                Log.d(TAG, "Ad detected via metadata heuristic")
-                muteVolume()
-            }
-
-            // ── Secondary ad check: skip-to-next action is disabled ─────────────
-            // Spotify disables the skip button during ads.
-            !isSkipEnabled(playbackState) -> {
-                Log.d(TAG, "Ad detected via disabled skip action")
-                muteVolume()
-            }
-
-            else -> {
-                Log.d(TAG, "Indeterminate state — maintaining current mute state")
-            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Crash during evaluateState", e)
+            updateNotification("Spotify Connection Error")
         }
     }
 
@@ -191,20 +208,41 @@ class AdMuteService : NotificationListenerService() {
         super.onNotificationPosted(sbn)
         if (sbn?.packageName != spotifyPackageName) return
 
-        @Suppress("DEPRECATION")
-        val token = sbn.notification.extras
-            .getParcelable<MediaSession.Token>(Notification.EXTRA_MEDIA_SESSION)
+        try {
+            @Suppress("DEPRECATION")
+            val token = sbn.notification.extras
+                .getParcelable<MediaSession.Token>(Notification.EXTRA_MEDIA_SESSION)
 
-        if (token != null && spotifyMediaController?.sessionToken != token) {
+            if (token != null && spotifyMediaController?.sessionToken != token) {
+                spotifyMediaController?.unregisterCallback(mediaControllerCallback)
+                spotifyMediaController = MediaController(applicationContext, token)
+                spotifyMediaController?.registerCallback(mediaControllerCallback)
+                updateNotification("Monitoring Spotify")
+                Log.d(TAG, "Attached to new Spotify MediaSession via notification")
+                // Immediately evaluate current state with both metadata and playback state
+                evaluateState(
+                    spotifyMediaController?.metadata,
+                    spotifyMediaController?.playbackState
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "MediaController crash in onNotificationPosted", e)
+            updateNotification("Spotify Connection Error")
+        }
+    }
+
+    override fun onNotificationRemoved(sbn: StatusBarNotification?) {
+        super.onNotificationRemoved(sbn)
+        if (sbn?.packageName != spotifyPackageName) return
+
+        try {
             spotifyMediaController?.unregisterCallback(mediaControllerCallback)
-            spotifyMediaController = MediaController(applicationContext, token)
-            spotifyMediaController?.registerCallback(mediaControllerCallback)
-            Log.d(TAG, "Attached to new Spotify MediaSession via notification")
-            // Immediately evaluate current state with both metadata and playback state
-            evaluateState(
-                spotifyMediaController?.metadata,
-                spotifyMediaController?.playbackState
-            )
+            spotifyMediaController = null
+            unmuteVolume()
+            updateNotification("Monitoring Paused (Spotify Closed)")
+            Log.d(TAG, "Spotify notification dismissed — media controller released and service idle")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error cleaning up onNotificationRemoved", e)
         }
     }
 
@@ -247,6 +285,45 @@ class AdMuteService : NotificationListenerService() {
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
+    /**
+     * Reacts instantly when the user flips the Master toggle or the Spotify toggle.
+     *
+     * Without this listener, a toggle change only takes effect on the next
+     * MediaController callback (which may never come if Spotify is paused).
+     * With this listener, any SharedPreferences write immediately re-evaluates state:
+     *  - Master or Spotify toggle OFF → unmute, update notification to "Spotify Monitoring Disabled"
+     *  - Toggle back ON → notification updates to active monitoring text
+     *
+     * Registered in [onCreate], unregistered in [onDestroy].
+     */
+    private val prefsChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+        Log.d(TAG, "Prefs changed — re-evaluating Spotify service state")
+        handler.post { reEvaluateFromPrefsChange() }
+    }
+
+    /**
+     * Called on the main thread whenever a SharedPreferences key changes.
+     * Reads current toggles and transitions state accordingly.
+     */
+    private fun reEvaluateFromPrefsChange() {
+        val prefs = PrefsHelper(applicationContext)
+        val masterOn = prefs.isMasterAppEnabled()
+        val spotifyOn = prefs.isAppEnabled(StatsManager.APP_SPOTIFY)
+
+        if (!masterOn || !spotifyOn) {
+            Log.d(TAG, "reEvaluateFromPrefsChange: toggled OFF — unmuting")
+            unmuteVolume()
+            updateNotification("Spotify Monitoring Disabled")
+        } else {
+            // Toggles are ON — re-evaluate with whatever state Spotify is in
+            Log.d(TAG, "reEvaluateFromPrefsChange: toggled ON — re-evaluating")
+            updateNotification("Monitoring Spotify")
+            evaluateState(
+                spotifyMediaController?.metadata,
+                spotifyMediaController?.playbackState
+            )
+        }
+    }
     @RequiresApi(Build.VERSION_CODES.O)
     private fun setupAudioPlaybackCallback() {
         val callback = object : AudioManager.AudioPlaybackCallback() {
@@ -289,7 +366,6 @@ class AdMuteService : NotificationListenerService() {
 
     override fun onCreate() {
         super.onCreate()
-        instance = this
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             setupAudioPlaybackCallback()
@@ -297,6 +373,13 @@ class AdMuteService : NotificationListenerService() {
         // Start foreground immediately in onCreate() to satisfy Android 12+ BGS restrictions.
         createNotificationChannel()
         startForeground(NOTIF_ID, buildNotification())
+
+        // Register the real-time prefs listener so toggle changes are instant
+        applicationContext
+            .getSharedPreferences("AdMutePrefs", Context.MODE_PRIVATE)
+            .registerOnSharedPreferenceChangeListener(prefsChangeListener)
+        Log.d(TAG, "SharedPreferences listener registered")
+
         Log.d(TAG, "Service created and moved to foreground")
     }
 
@@ -307,12 +390,16 @@ class AdMuteService : NotificationListenerService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        instance = null
         handler.removeCallbacks(failsafeRunnable)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioPlaybackCallback != null) {
             audioManager.unregisterAudioPlaybackCallback(audioPlaybackCallback!!)
             Log.d(TAG, "AudioPlaybackCallback unregistered")
         }
+        // Unregister the real-time prefs listener
+        applicationContext
+            .getSharedPreferences("AdMutePrefs", Context.MODE_PRIVATE)
+            .unregisterOnSharedPreferenceChangeListener(prefsChangeListener)
+        Log.d(TAG, "SharedPreferences listener unregistered")
         unmuteVolume()
         spotifyMediaController?.unregisterCallback(mediaControllerCallback)
         isListenerConnected = false

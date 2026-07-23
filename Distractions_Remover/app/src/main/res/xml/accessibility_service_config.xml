@@ -34,8 +34,6 @@
 
     android:description="@string/accessibility_service_description"
 
-    android:packageNames="com.google.android.youtube,com.facebook.katana,com.instagram.android,com.spotify.music"
-
     android:accessibilityEventTypes="typeWindowContentChanged|typeWindowStateChanged"
 
     android:accessibilityFeedbackType="feedbackGeneric"

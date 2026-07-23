@@ -1,11 +1,14 @@
 package com.example.admuteforspotify
 
+import android.Manifest
 import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
@@ -25,8 +28,8 @@ import com.google.android.material.button.MaterialButton
  *     shortcut to the App Info screen and a "I've Done This" gate button.
  *
  *   Step 2 (index 1) — Grant standard permissions
- *     Three tappable rows that each open the relevant system settings screen.
- *     "Finish Setup" only activates once ALL THREE are confirmed.
+ *     Five tappable rows that each open the relevant system settings screen.
+ *     "Finish Setup" only activates once ALL FIVE are confirmed.
  *
  * Completion is persisted in SharedPreferences so MainActivity can skip the
  * wizard on subsequent launches.
@@ -46,6 +49,8 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var chipNotification: TextView
     private lateinit var chipBattery: TextView
     private lateinit var chipDnd: TextView
+    private lateinit var chipAccessibility: TextView
+    private lateinit var chipAppNotification: TextView
     private lateinit var btnContinue: MaterialButton
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -82,10 +87,12 @@ class SetupActivity : AppCompatActivity() {
         }
 
         // ── Step 2 wiring ──────────────────────────────────────────────────────
-        chipNotification = findViewById(R.id.chipNotification)
-        chipBattery      = findViewById(R.id.chipBattery)
-        chipDnd          = findViewById(R.id.chipDnd)
-        btnContinue      = findViewById(R.id.btnContinue)
+        chipNotification     = findViewById(R.id.chipNotification)
+        chipBattery          = findViewById(R.id.chipBattery)
+        chipDnd              = findViewById(R.id.chipDnd)
+        chipAccessibility    = findViewById(R.id.chipAccessibility)
+        chipAppNotification = findViewById(R.id.chipAppNotification)
+        btnContinue          = findViewById(R.id.btnContinue)
 
         /** Row 1 — Notification Listener: required to attach to Spotify's MediaSession. */
         findViewById<LinearLayout>(R.id.rowNotification).setOnClickListener {
@@ -111,8 +118,25 @@ class SetupActivity : AppCompatActivity() {
             startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
         }
 
+        /** Row 4 — Accessibility Service: required to monitor YouTube, Facebook, & Instagram. */
+        findViewById<LinearLayout>(R.id.rowAccessibility).setOnClickListener {
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
+
+        /** Row 5 — App Notifications: required for status bar notifications. */
+        findViewById<LinearLayout>(R.id.rowAppNotification).setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
+            } else {
+                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                    putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                }
+                startActivity(intent)
+            }
+        }
+
         /**
-         * "Finish Setup" — only reachable when all three permissions are granted.
+         * "Finish Setup" — only reachable when all five permissions are granted.
          * Persists completion flag and launches the main dashboard.
          */
         btnContinue.setOnClickListener {
@@ -190,18 +214,38 @@ class SetupActivity : AppCompatActivity() {
         return nm.isNotificationPolicyAccessGranted
     }
 
+    /** True when AdMuteAccessibilityService is enabled in System Accessibility settings. */
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val enabledServices = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: ""
+        val component = ComponentName(this, AdMuteAccessibilityService::class.java).flattenToString()
+        return enabledServices.contains(component)
+    }
+
+    /** True when App Notification permission is granted. */
+    private fun isAppNotificationEnabled(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        }
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        return nm.areNotificationsEnabled()
+    }
+
     // ── UI refresh ────────────────────────────────────────────────────────────
 
     private fun refreshPermissionState() {
-        val notifOk   = isNotificationListenerEnabled()
-        val batteryOk = isBatteryOptimizationIgnored()
-        val dndOk     = isDndGranted()
+        val notifOk         = isNotificationListenerEnabled()
+        val batteryOk       = isBatteryOptimizationIgnored()
+        val dndOk           = isDndGranted()
+        val accessibilityOk = isAccessibilityServiceEnabled()
+        val appNotifOk      = isAppNotificationEnabled()
 
-        updateChip(chipNotification, notifOk)
-        updateChip(chipBattery,      batteryOk)
-        updateChip(chipDnd,          dndOk)
+        updateChip(chipNotification,     notifOk)
+        updateChip(chipBattery,          batteryOk)
+        updateChip(chipDnd,              dndOk)
+        updateChip(chipAccessibility,    accessibilityOk)
+        updateChip(chipAppNotification,  appNotifOk)
 
-        val allGranted = notifOk && batteryOk && dndOk
+        val allGranted = notifOk && batteryOk && dndOk && accessibilityOk && appNotifOk
         btnContinue.isEnabled = allGranted
         btnContinue.alpha     = if (allGranted) 1f else 0.4f
     }

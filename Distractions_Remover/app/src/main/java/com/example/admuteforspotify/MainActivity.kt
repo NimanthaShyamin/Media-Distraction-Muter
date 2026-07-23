@@ -1,5 +1,6 @@
 package com.example.admuteforspotify
 
+import android.Manifest
 import android.app.AlertDialog
 import android.app.NotificationManager
 import android.content.ClipData
@@ -7,12 +8,16 @@ import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -136,8 +141,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // ── Permission gate ─────────────────────────────────────────────────
-        // If any required permission is missing, redirect to the setup wizard.
-        if (!isNotificationListenerEnabled() || !isDndGranted() || !isBatteryOptimizationIgnored()) {
+        // If any of the 5 required permissions is missing, redirect to setup.
+        if (!isAllPermissionsGranted()) {
             startActivity(Intent(this, SetupActivity::class.java))
             finish()
             return
@@ -153,6 +158,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     var showSettings by remember { mutableStateOf(false) }
                     if (showSettings) {
+                        BackHandler { showSettings = false }
                         SettingsScreen(onBack = { showSettings = false })
                     } else {
                         AdMuteDashboard(onSettingsClick = { showSettings = true })
@@ -166,13 +172,21 @@ class MainActivity : ComponentActivity() {
         super.onResume()
 
         // Re-check permissions on every resume (user may have revoked them).
-        if (!isNotificationListenerEnabled() || !isDndGranted() || !isBatteryOptimizationIgnored()) {
+        if (!isAllPermissionsGranted()) {
             startActivity(Intent(this, SetupActivity::class.java))
             finish()
         }
     }
 
     // ── Permission helpers ──────────────────────────────────────────────────
+
+    private fun isAllPermissionsGranted(): Boolean {
+        return isNotificationListenerEnabled() &&
+               isDndGranted() &&
+               isBatteryOptimizationIgnored() &&
+               isAccessibilityServiceEnabled() &&
+               isAppNotificationEnabled()
+    }
 
     private fun isNotificationListenerEnabled(): Boolean {
         val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners") ?: ""
@@ -188,6 +202,23 @@ class MainActivity : ComponentActivity() {
     private fun isBatteryOptimizationIgnored(): Boolean {
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         return pm.isIgnoringBatteryOptimizations(packageName)
+    }
+
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val enabledServices = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: ""
+        val component = ComponentName(this, AdMuteAccessibilityService::class.java).flattenToString()
+        return enabledServices.contains(component)
+    }
+
+    private fun isAppNotificationEnabled(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        return nm.areNotificationsEnabled()
     }
 
     // ── Crash report ────────────────────────────────────────────────────────
