@@ -125,10 +125,7 @@ data class TargetApp(
 )
 
 private val TARGET_APPS = listOf(
-    TargetApp("YouTube",   "com.google.android.youtube", YouTubeRed,    "▶", StatsManager.APP_YOUTUBE),
     TargetApp("Spotify",   "com.spotify.music",          SpotifyGreen,  "♫", StatsManager.APP_SPOTIFY),
-    TargetApp("Facebook",  "com.facebook.katana",        FacebookBlue,  "f", StatsManager.APP_FACEBOOK),
-    TargetApp("Instagram", "com.instagram.android",      InstagramPink, "◎", StatsManager.APP_INSTAGRAM),
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -141,7 +138,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // ── Permission gate ─────────────────────────────────────────────────
-        // If any of the 5 required permissions is missing, redirect to setup.
+        // If any of the required permissions is missing, redirect to setup.
         if (!isAllPermissionsGranted()) {
             startActivity(Intent(this, SetupActivity::class.java))
             finish()
@@ -183,9 +180,7 @@ class MainActivity : ComponentActivity() {
     private fun isAllPermissionsGranted(): Boolean {
         return isNotificationListenerEnabled() &&
                isDndGranted() &&
-               isBatteryOptimizationIgnored() &&
-               isAccessibilityServiceEnabled() &&
-               isAppNotificationEnabled()
+               isBatteryOptimizationIgnored()
     }
 
     private fun isNotificationListenerEnabled(): Boolean {
@@ -202,12 +197,6 @@ class MainActivity : ComponentActivity() {
     private fun isBatteryOptimizationIgnored(): Boolean {
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         return pm.isIgnoringBatteryOptimizations(packageName)
-    }
-
-    private fun isAccessibilityServiceEnabled(): Boolean {
-        val enabledServices = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: ""
-        val component = ComponentName(this, AdMuteAccessibilityService::class.java).flattenToString()
-        return enabledServices.contains(component)
     }
 
     private fun isAppNotificationEnabled(): Boolean {
@@ -329,22 +318,8 @@ fun AdMuteDashboard(onSettingsClick: () -> Unit) {
             pageSpacing = 16.dp,
             beyondViewportPageCount = 1,
         ) { pageIndex ->
-            // Per-page parallax scale: pages further from center are smaller.
-            val pageOffset = ((pagerState.currentPage - pageIndex)
-                    + pagerState.currentPageOffsetFraction).absoluteValue
-            val scale by animateFloatAsState(
-                targetValue = 1f - (pageOffset * 0.08f).coerceIn(0f, 0.15f),
-                animationSpec = tween(durationMillis = 250),
-                label = "pageScale",
-            )
-
             Box(
-                modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                    }
-                    .padding(horizontal = 24.dp),
+                modifier = Modifier.padding(horizontal = 24.dp),
             ) {
                 AppPage(app = TARGET_APPS[pageIndex], stats = stats)
             }
@@ -496,12 +471,6 @@ fun CounterCard(
     accent: Color,
     modifier: Modifier = Modifier,
 ) {
-    val animatedCount by animateIntAsState(
-        targetValue = count,
-        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
-        label = "counterAnim",
-    )
-
     Card(
         modifier = modifier.height(120.dp),
         shape = RoundedCornerShape(20.dp),
@@ -515,7 +484,7 @@ fun CounterCard(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = animatedCount.toString(),
+                text = count.toString(),
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontWeight = FontWeight.Black,
                 ),

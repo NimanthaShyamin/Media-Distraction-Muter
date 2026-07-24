@@ -37,16 +37,12 @@ object StatsManager {
     private const val SUFFIX_SKIPPED = "_skipped_count"
     private const val SUFFIX_TIME_SAVED = "_time_saved"
 
-    // ── All tracked app keys ────────────────────────────────────────────────
-    // Kept as constants so callers don't need to hard-code strings.
-    const val APP_YOUTUBE   = "youtube"
-    const val APP_FACEBOOK  = "facebook"
-    const val APP_INSTAGRAM = "instagram"
+    // ── Tracked app key ─────────────────────────────────────────────────────
     const val APP_SPOTIFY   = "spotify"
 
     /** All known counter keys — used to build the full stats snapshot. */
     private val ALL_KEYS: List<String> = listOf(
-        APP_YOUTUBE, APP_FACEBOOK, APP_INSTAGRAM, APP_SPOTIFY
+        APP_SPOTIFY
     ).flatMap { app ->
         listOf("$app$SUFFIX_MUTED", "$app$SUFFIX_SKIPPED", "$app$SUFFIX_TIME_SAVED")
     }

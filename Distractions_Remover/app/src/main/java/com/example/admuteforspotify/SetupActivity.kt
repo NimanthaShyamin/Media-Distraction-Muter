@@ -49,7 +49,6 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var chipNotification: TextView
     private lateinit var chipBattery: TextView
     private lateinit var chipDnd: TextView
-    private lateinit var chipAccessibility: TextView
     private lateinit var chipAppNotification: TextView
     private lateinit var btnContinue: MaterialButton
 
@@ -90,7 +89,6 @@ class SetupActivity : AppCompatActivity() {
         chipNotification     = findViewById(R.id.chipNotification)
         chipBattery          = findViewById(R.id.chipBattery)
         chipDnd              = findViewById(R.id.chipDnd)
-        chipAccessibility    = findViewById(R.id.chipAccessibility)
         chipAppNotification = findViewById(R.id.chipAppNotification)
         btnContinue          = findViewById(R.id.btnContinue)
 
@@ -118,20 +116,22 @@ class SetupActivity : AppCompatActivity() {
             startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
         }
 
-        /** Row 4 — Accessibility Service: required to monitor YouTube, Facebook, & Instagram. */
-        findViewById<LinearLayout>(R.id.rowAccessibility).setOnClickListener {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-        }
-
-        /** Row 5 — App Notifications: required for status bar notifications. */
+        /** Row 4 — App Notifications: optional for status bar notifications. */
         findViewById<LinearLayout>(R.id.rowAppNotification).setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
-            } else {
-                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                    putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                val notifPermission = Manifest.permission.POST_NOTIFICATIONS
+                if (checkSelfPermission(notifPermission) == PackageManager.PERMISSION_GRANTED) {
+                    openAppNotificationSettings()
+                } else if (!shouldShowRequestPermissionRationale(notifPermission) &&
+                    getSharedPreferences("admute_prefs", MODE_PRIVATE).getBoolean("notif_requested_once", false)) {
+                    // System dialog blocked or ignored → launch fallback settings intent
+                    openAppNotificationSettings()
+                } else {
+                    getSharedPreferences("admute_prefs", MODE_PRIVATE).edit().putBoolean("notif_requested_once", true).apply()
+                    requestPermissions(arrayOf(notifPermission), 101)
                 }
-                startActivity(intent)
+            } else {
+                openAppNotificationSettings()
             }
         }
 
@@ -214,13 +214,6 @@ class SetupActivity : AppCompatActivity() {
         return nm.isNotificationPolicyAccessGranted
     }
 
-    /** True when AdMuteAccessibilityService is enabled in System Accessibility settings. */
-    private fun isAccessibilityServiceEnabled(): Boolean {
-        val enabledServices = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: ""
-        val component = ComponentName(this, AdMuteAccessibilityService::class.java).flattenToString()
-        return enabledServices.contains(component)
-    }
-
     /** True when App Notification permission is granted. */
     private fun isAppNotificationEnabled(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -236,18 +229,37 @@ class SetupActivity : AppCompatActivity() {
         val notifOk         = isNotificationListenerEnabled()
         val batteryOk       = isBatteryOptimizationIgnored()
         val dndOk           = isDndGranted()
-        val accessibilityOk = isAccessibilityServiceEnabled()
         val appNotifOk      = isAppNotificationEnabled()
 
         updateChip(chipNotification,     notifOk)
         updateChip(chipBattery,          batteryOk)
         updateChip(chipDnd,              dndOk)
-        updateChip(chipAccessibility,    accessibilityOk)
         updateChip(chipAppNotification,  appNotifOk)
 
-        val allGranted = notifOk && batteryOk && dndOk && accessibilityOk && appNotifOk
+        val allGranted = notifOk && batteryOk && dndOk
         btnContinue.isEnabled = allGranted
         btnContinue.alpha     = if (allGranted) 1f else 0.4f
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 101) {
+            if (grantResults.isEmpty() || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                try { openAppNotificationSettings() } catch (_: Exception) {}
+            }
+            refreshPermissionState()
+        }
+    }
+
+    private fun openAppNotificationSettings() {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+        }
+        startActivity(intent)
     }
 
     private fun updateChip(chip: TextView, granted: Boolean) {
